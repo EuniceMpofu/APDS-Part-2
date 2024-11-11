@@ -3,7 +3,6 @@ import http from "http";
 import fs from "fs";
 import users from './routes/user.mjs';
 import paymentDetails from './routes/paymentDetails.mjs';
-import accountDetails from './routes/accountDetails.mjs';
 import express from "express";
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
@@ -43,8 +42,6 @@ app.use('/user', users);
 app.route('/user', users);
 app.use('/paymentDetails', paymentDetails);
 app.route('/paymentDetails', paymentDetails);
-app.use('/accountDetails', accountDetails);
-app.route('/accountDetails', accountDetails);
 
 let server = https.createServer(options, app);
 console.log(PORT)
