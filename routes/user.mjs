@@ -64,7 +64,7 @@ router.post('/signup', [
 
 // login
 router.post('/login', [
-    body('fullname', 'accNumber')
+    body('fullname')
         .trim()
         .escape()
         .notEmpty()
@@ -132,7 +132,7 @@ router.post('/login', [
 
 // login
 router.post('/employee-login', [
-    body('fullname', 'accNumber')
+    body('fullname')
         .trim()
         .escape()
         .notEmpty()
@@ -152,7 +152,7 @@ router.post('/employee-login', [
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const {fullname, accNumber, password} = req.body;
+    const {fullname, password} = req.body;
 
     try {
         const collection = await db.collection('users');
