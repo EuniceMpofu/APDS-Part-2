@@ -23,7 +23,7 @@ router.post('/accDetails', [
         .escape()
         .notEmpty()
         .withMessage('Swift code is required'),
-], async (req, res) => {
+], checkauth, async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

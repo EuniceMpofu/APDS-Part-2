@@ -52,7 +52,8 @@ router.post('/signup', [
         fullname: req.body.fullname,
         idNumber: req.body.idNumber,
         accNumber: req.body.accNumber,
-        password: (await password).toString()
+        password: (await password).toString(),
+        employee: "n"
     };
 
     let collection = await db.collection("users");
@@ -84,7 +85,6 @@ router.post('/login', [
     }
 
     const {fullname, accNumber, password} = req.body;
-    console.log(fullname + " " + password)
 
     try {
         const collection = await db.collection('users');
@@ -99,24 +99,101 @@ router.post('/login', [
 
         if (!passwordMatch) {
             return res.status(401).json({message: "Authentication failed"});
-        }
-        else {
+        } else {
             // Authentication successful
             const token = jwt.sign(
                 { username: req.body.username, accNumber: req.body.accNumber, password: req.body.password },
                 process.env.JWT_SECRET,
                 { expiresIn: "1h" }
             );
-            
-            res.status(200).json({message: "Authentication successful", token: token, fullname: req.body.fullname});
-            console.log("Your new token is", token)
 
+            // Set the token in a cookie before sending the response
             res.cookie('token', token, {
                 httpOnly: true,  
                 secure: true,    
                 sameSite: 'Strict', 
                 maxAge: 3600000, 
             });
+
+            // Send the response after setting the cookie
+            res.status(200).json({
+                message: "Authentication successful",
+                token: token,
+                fullname: req.body.fullname
+            });
+
+            console.log("Your new token is", token);
+        }
+    } catch (error) {
+        console.error("Login error:", error);
+        res.status(500).json({message: "Login failed"});
+    }
+});
+
+// login
+router.post('/employee-login', [
+    body('fullname', 'accNumber')
+        .trim()
+        .escape()
+        .notEmpty()
+        .withMessage('Fullname is required'),
+    body('accNumber')
+        .trim()
+        .escape()
+        .notEmpty()
+        .withMessage('Account number is required'),
+    body('password')
+        .notEmpty()
+        .withMessage('Password is required'),
+], bruteforce.prevent, async (req, res) => {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    const {fullname, accNumber, password} = req.body;
+
+    try {
+        const collection = await db.collection('users');
+        const user = await collection.findOne({fullname});
+
+        if (!user) {
+            return res.status(401).json({message: "Authentication failed"});
+        }
+
+        // Compare the provided password with the hashed password in the database
+        const passwordMatch = await bcrypt.compare(password, user.password);
+
+        // Check if the user is an employee
+        const isEmployee = user.employee === "y";
+
+        if (!passwordMatch || !isEmployee) {
+            return res.status(401).json({message: "Authentication failed, make sure you have entered the correct credentials and you are an employee."});
+        } else {
+            // Authentication successful
+            const token = jwt.sign(
+                { username: req.body.username, accNumber: req.body.accNumber, password: req.body.password },
+                process.env.JWT_SECRET,
+                { expiresIn: "1h" }
+            );
+
+            // Set the token in a cookie before sending the response
+            res.cookie('token', token, {
+                httpOnly: true,  
+                secure: true,    
+                sameSite: 'Strict', 
+                maxAge: 3600000, 
+            });
+
+            // Send the response after setting the cookie
+            res.status(200).json({
+                message: "Authentication successful",
+                token: token,
+                fullname: req.body.fullname
+            });
+
+            console.log("Your new token is", token);
         }
     } catch (error) {
         console.error("Login error:", error);
