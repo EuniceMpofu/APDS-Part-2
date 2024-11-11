@@ -84,7 +84,7 @@ router.post('/login', [
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const {fullname, accNumber, password} = req.body;
+    const {fullname, password} = req.body;
 
     try {
         const collection = await db.collection('users');
